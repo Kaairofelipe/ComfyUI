@@ -58,6 +58,21 @@ class ListAssetsQuery(BaseModel):
         return None
 
 
+class UpdateAssetBody(BaseModel):
+    name: str | None = None
+    tags: list[str] | None = None
+    user_metadata: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self):
+        if self.name is None and self.tags is None and self.user_metadata is None:
+            raise ValueError("Provide at least one of: name, tags, user_metadata.")
+        if self.tags is not None:
+            if not isinstance(self.tags, list) or not all(isinstance(t, str) for t in self.tags):
+                raise ValueError("Field 'tags' must be an array of strings.")
+        return self
+
+
 class CreateFromHashBody(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 

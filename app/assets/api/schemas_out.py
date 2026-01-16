@@ -29,6 +29,21 @@ class AssetsList(BaseModel):
     has_more: bool
 
 
+class AssetUpdated(BaseModel):
+    id: str
+    name: str
+    asset_hash: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    user_metadata: dict[str, Any] = Field(default_factory=dict)
+    updated_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("updated_at")
+    def _ser_updated(self, v: datetime | None, _info):
+        return v.isoformat() if v else None
+
+
 class AssetDetail(BaseModel):
     id: str
     name: str

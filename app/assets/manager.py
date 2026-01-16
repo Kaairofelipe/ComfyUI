@@ -8,10 +8,12 @@ from app.assets.api import schemas_out, schemas_in
 from app.assets.database.queries import (
     asset_exists_by_hash,
     get_asset_by_hash,
+    get_asset_info_by_id,
     fetch_asset_info_asset_and_tags,
     fetch_asset_info_and_asset,
     create_asset_info_for_existing_asset,
     touch_asset_info_by_id,
+    update_asset_info_full,
     list_cache_states_by_asset_id,
     list_asset_infos_page,
     list_tags_with_usage,
@@ -275,6 +277,44 @@ def upload_asset_from_temp_path(
         created_at=info.created_at,
         last_access_time=info.last_access_time,
         created_new=result["asset_created"],
+    )
+
+
+def update_asset(
+    *,
+    asset_info_id: str,
+    name: str | None = None,
+    tags: list[str] | None = None,
+    user_metadata: dict | None = None,
+    owner_id: str = "",
+) -> schemas_out.AssetUpdated:
+    with create_session() as session:
+        info_row = get_asset_info_by_id(session, asset_info_id=asset_info_id)
+        if not info_row:
+            raise ValueError(f"AssetInfo {asset_info_id} not found")
+        if info_row.owner_id and info_row.owner_id != owner_id:
+            raise PermissionError("not owner")
+
+        info = update_asset_info_full(
+            session,
+            asset_info_id=asset_info_id,
+            name=name,
+            tags=tags,
+            user_metadata=user_metadata,
+            tag_origin="manual",
+            asset_info_row=info_row,
+        )
+
+        tag_names = get_asset_tags(session, asset_info_id=asset_info_id)
+        session.commit()
+
+    return schemas_out.AssetUpdated(
+        id=info.id,
+        name=info.name,
+        asset_hash=info.asset.hash if info.asset else None,
+        tags=tag_names,
+        user_metadata=info.user_metadata or {},
+        updated_at=info.updated_at,
     )
 
 

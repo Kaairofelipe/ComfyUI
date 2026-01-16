@@ -652,6 +652,71 @@ def ingest_fs_asset(
     return out
 
 
+def update_asset_info_full(
+    session: Session,
+    *,
+    asset_info_id: str,
+    name: str | None = None,
+    tags: Sequence[str] | None = None,
+    user_metadata: dict | None = None,
+    tag_origin: str = "manual",
+    asset_info_row: Any = None,
+) -> AssetInfo:
+    if not asset_info_row:
+        info = session.get(AssetInfo, asset_info_id)
+        if not info:
+            raise ValueError(f"AssetInfo {asset_info_id} not found")
+    else:
+        info = asset_info_row
+
+    touched = False
+    if name is not None and name != info.name:
+        info.name = name
+        touched = True
+
+    computed_filename = None
+    try:
+        p = pick_best_live_path(list_cache_states_by_asset_id(session, asset_id=info.asset_id))
+        if p:
+            computed_filename = compute_relative_filename(p)
+    except Exception:
+        computed_filename = None
+
+    if user_metadata is not None:
+        new_meta = dict(user_metadata)
+        if computed_filename:
+            new_meta["filename"] = computed_filename
+        replace_asset_info_metadata_projection(
+            session, asset_info_id=asset_info_id, user_metadata=new_meta
+        )
+        touched = True
+    else:
+        if computed_filename:
+            current_meta = info.user_metadata or {}
+            if current_meta.get("filename") != computed_filename:
+                new_meta = dict(current_meta)
+                new_meta["filename"] = computed_filename
+                replace_asset_info_metadata_projection(
+                    session, asset_info_id=asset_info_id, user_metadata=new_meta
+                )
+                touched = True
+
+    if tags is not None:
+        set_asset_info_tags(
+            session,
+            asset_info_id=asset_info_id,
+            tags=tags,
+            origin=tag_origin,
+        )
+        touched = True
+
+    if touched and user_metadata is None:
+        info.updated_at = utcnow()
+        session.flush()
+
+    return info
+
+
 def list_tags_with_usage(
     session: Session,
     prefix: str | None = None,
