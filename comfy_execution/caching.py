@@ -155,6 +155,10 @@ class BasicCache:
         self.cache = {}
         self.subcaches = {}
 
+        # External cache provider support
+        self._is_subcache = False
+        self._current_prompt_id = ''
+
     async def set_prompt(self, dynprompt, node_ids, is_changed_cache):
         self.dynprompt = dynprompt
         self.cache_key_set = self.key_class(dynprompt, node_ids, is_changed_cache)
@@ -201,20 +205,123 @@ class BasicCache:
         cache_key = self.cache_key_set.get_data_key(node_id)
         self.cache[cache_key] = value
 
+        # Notify external providers
+        self._notify_providers_store(node_id, cache_key, value)
+
     def _get_immediate(self, node_id):
         if not self.initialized:
             return None
         cache_key = self.cache_key_set.get_data_key(node_id)
+
+        # Check local cache first (fast path)
         if cache_key in self.cache:
             return self.cache[cache_key]
-        else:
+
+        # Check external providers on local miss
+        external_result = self._check_providers_lookup(node_id, cache_key)
+        if external_result is not None:
+            self.cache[cache_key] = external_result  # Warm local cache
+            return external_result
+
+        return None
+
+    def _notify_providers_store(self, node_id, cache_key, value):
+        """Notify external providers of cache store."""
+        from comfy_execution.cache_provider import (
+            has_cache_providers, get_cache_providers,
+            CacheContext, CacheValue,
+            serialize_cache_key, contains_nan, logger
+        )
+
+        # Fast exit conditions
+        if self._is_subcache:
+            return
+        if not has_cache_providers():
+            return
+        if not self._is_cacheable_value(value):
+            return
+        if contains_nan(cache_key):
+            return
+
+        context = CacheContext(
+            prompt_id=self._current_prompt_id,
+            node_id=node_id,
+            class_type=self._get_class_type(node_id),
+            cache_key=cache_key,
+            cache_key_bytes=serialize_cache_key(cache_key)
+        )
+        cache_value = CacheValue(outputs=value.outputs)
+
+        for provider in get_cache_providers():
+            try:
+                if provider.should_cache(context, cache_value):
+                    provider.on_store(context, cache_value)
+            except Exception as e:
+                logger.warning(f"Cache provider {provider.__class__.__name__} error on store: {e}")
+
+    def _check_providers_lookup(self, node_id, cache_key):
+        """Check external providers for cached result."""
+        from comfy_execution.cache_provider import (
+            has_cache_providers, get_cache_providers,
+            CacheContext, CacheValue,
+            serialize_cache_key, contains_nan, logger
+        )
+
+        if self._is_subcache:
             return None
+        if not has_cache_providers():
+            return None
+        if contains_nan(cache_key):
+            return None
+
+        context = CacheContext(
+            prompt_id=self._current_prompt_id,
+            node_id=node_id,
+            class_type=self._get_class_type(node_id),
+            cache_key=cache_key,
+            cache_key_bytes=serialize_cache_key(cache_key)
+        )
+
+        for provider in get_cache_providers():
+            try:
+                if not provider.should_cache(context):
+                    continue
+                result = provider.on_lookup(context)
+                if result is not None:
+                    if not isinstance(result, CacheValue):
+                        logger.warning(f"Provider {provider.__class__.__name__} returned invalid type")
+                        continue
+                    if not isinstance(result.outputs, (list, tuple)):
+                        logger.warning(f"Provider {provider.__class__.__name__} returned invalid outputs")
+                        continue
+                    # Import CacheEntry here to avoid circular import at module level
+                    from execution import CacheEntry
+                    return CacheEntry(ui={}, outputs=list(result.outputs))
+            except Exception as e:
+                logger.warning(f"Cache provider {provider.__class__.__name__} error on lookup: {e}")
+
+        return None
+
+    def _is_cacheable_value(self, value):
+        """Check if value is a CacheEntry (not objects cache)."""
+        return hasattr(value, 'outputs') and hasattr(value, 'ui')
+
+    def _get_class_type(self, node_id):
+        """Get class_type for a node."""
+        if not self.initialized or not self.dynprompt:
+            return ''
+        try:
+            return self.dynprompt.get_node(node_id).get('class_type', '')
+        except Exception:
+            return ''
 
     async def _ensure_subcache(self, node_id, children_ids):
         subcache_key = self.cache_key_set.get_subcache_key(node_id)
         subcache = self.subcaches.get(subcache_key, None)
         if subcache is None:
             subcache = BasicCache(self.key_class)
+            subcache._is_subcache = True  # Mark as subcache - excludes from external caching
+            subcache._current_prompt_id = self._current_prompt_id  # Propagate prompt ID
             self.subcaches[subcache_key] = subcache
         await subcache.set_prompt(self.dynprompt, children_ids, self.is_changed_cache)
         return subcache
