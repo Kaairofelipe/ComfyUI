@@ -173,6 +173,7 @@ def upload_asset_from_temp_path(
     expected_asset_hash: str | None = None,
 ) -> schemas_out.AssetCreated:
     try:
+        import app.assets.hashing as hashing
         digest = hashing.blake3_hash(temp_path)
     except Exception as e:
         raise RuntimeError(f"failed to hash uploaded file: {e}")
