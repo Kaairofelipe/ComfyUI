@@ -159,9 +159,9 @@ def resolve_asset_content_for_download(
         touch_asset_info_by_id(session, asset_info_id=asset_info_id)
         session.commit()
 
-    ctype = asset.mime_type or mimetypes.guess_type(info.name or abs_path)[0] or "application/octet-stream"
-    download_name = info.name or os.path.basename(abs_path)
-    return abs_path, ctype, download_name
+        ctype = asset.mime_type or mimetypes.guess_type(info.name or abs_path)[0] or "application/octet-stream"
+        download_name = info.name or os.path.basename(abs_path)
+        return abs_path, ctype, download_name
 
 
 def upload_asset_from_temp_path(
