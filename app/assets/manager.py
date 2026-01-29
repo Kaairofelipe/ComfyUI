@@ -172,7 +172,11 @@ def upload_asset_from_temp_path(
     owner_id: str = "",
     expected_asset_hash: str | None = None,
 ) -> schemas_out.AssetCreated:
+    """
+    Create new asset or update existing asset from a temporary file path.
+    """
     try:
+        # NOTE: blake3 is not required right now, so this will fail if blake3 is not installed in local environment
         import app.assets.hashing as hashing
         digest = hashing.blake3_hash(temp_path)
     except Exception as e:

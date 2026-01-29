@@ -338,7 +338,6 @@ async def update_asset(request: web.Request) -> web.Response:
         result = manager.update_asset(
             asset_info_id=asset_info_id,
             name=body.name,
-            tags=body.tags,
             user_metadata=body.user_metadata,
             owner_id=USER_MANAGER.get_request_user_id(request),
         )
