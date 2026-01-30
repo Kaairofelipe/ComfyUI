@@ -1,0 +1,7 @@
+# Intel GPU requirements (XPU - Arc GPUs)
+# Usage: pip install -r requirements-intel.txt
+
+--index-url https://download.pytorch.org/whl/xpu
+--extra-index-url https://pypi.org/simple
+
+-r requirements.txt

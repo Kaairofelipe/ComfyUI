@@ -1,0 +1,6 @@
+# NVIDIA GPU requirements (CUDA 13.0)
+# Usage: pip install -r requirements-nvidia.txt
+
+--extra-index-url https://download.pytorch.org/whl/cu130
+
+-r requirements.txt
