@@ -11,6 +11,7 @@ import app.assets.manager as manager
 from app import user_manager
 from app.assets.api import schemas_in
 from app.assets.helpers import get_query_dict
+from app.assets.scanner import seed_assets
 
 import folder_paths
 
@@ -489,3 +490,25 @@ async def delete_asset_tags(request: web.Request) -> web.Response:
         return _error_response(500, "INTERNAL", "Unexpected server error.")
 
     return web.json_response(result.model_dump(mode="json"), status=200)
+
+
+@ROUTES.post("/api/assets/seed")
+async def seed_assets_endpoint(request: web.Request) -> web.Response:
+    """Trigger asset seeding for specified roots (models, input, output)."""
+    try:
+        payload = await request.json()
+        roots = payload.get("roots", ["models", "input", "output"])
+    except Exception:
+        roots = ["models", "input", "output"]
+
+    valid_roots = [r for r in roots if r in ("models", "input", "output")]
+    if not valid_roots:
+        return _error_response(400, "INVALID_BODY", "No valid roots specified")
+
+    try:
+        seed_assets(tuple(valid_roots))
+    except Exception:
+        logging.exception("seed_assets failed for roots=%s", valid_roots)
+        return _error_response(500, "INTERNAL", "Seed operation failed")
+
+    return web.json_response({"seeded": valid_roots}, status=200)
