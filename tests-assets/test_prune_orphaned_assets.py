@@ -109,7 +109,7 @@ def test_prune_across_multiple_roots(
     """Prune correctly handles assets across input and output roots."""
     scope = f"multi-{uuid.uuid4().hex[:6]}"
     input_fp = create_seed_file("input", scope, "input.bin")
-    output_fp = create_seed_file("output", scope, "output.bin")
+    create_seed_file("output", scope, "output.bin")
 
     trigger_sync_seed_assets(http, api_base)
     assert len(find_asset(scope)) == 2
