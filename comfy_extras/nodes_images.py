@@ -460,8 +460,7 @@ class SaveSVGNode(IO.ComfyNode):
 
 
         for batch_number, svg_bytes in enumerate(svg.data):
-            filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
-            file = f"{filename_with_batch_num}_{counter:05}_.svg"
+            file = folder_paths.format_output_filename(filename, counter, "svg", batch_num=str(batch_number))
 
             # Read SVG content
             svg_bytes.seek(0)

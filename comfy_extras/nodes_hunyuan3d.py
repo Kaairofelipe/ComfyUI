@@ -642,7 +642,7 @@ class SaveGLB(IO.ComfyNode):
                     metadata[x] = json.dumps(cls.hidden.extra_pnginfo[x])
 
         for i in range(mesh.vertices.shape[0]):
-            f = f"{filename}_{counter:05}_.glb"
+            f = folder_paths.format_output_filename(filename, counter, "glb")
             save_glb(mesh.vertices[i], mesh.faces[i], os.path.join(full_output_folder, f), metadata)
             results.append({
                 "filename": f,

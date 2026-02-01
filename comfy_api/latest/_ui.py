@@ -146,8 +146,7 @@ class ImageSaveHelper:
         metadata = ImageSaveHelper._create_png_metadata(cls)
         for batch_number, image_tensor in enumerate(images):
             img = ImageSaveHelper._convert_tensor_to_pil(image_tensor)
-            filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
-            file = f"{filename_with_batch_num}_{counter:05}_.png"
+            file = folder_paths.format_output_filename(filename, counter, "png", batch_num=str(batch_number))
             img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=compress_level)
             results.append(SavedResult(file, subfolder, folder_type))
             counter += 1
@@ -176,7 +175,7 @@ class ImageSaveHelper:
         )
         pil_images = [ImageSaveHelper._convert_tensor_to_pil(img) for img in images]
         metadata = ImageSaveHelper._create_animated_png_metadata(cls)
-        file = f"{filename}_{counter:05}_.png"
+        file = folder_paths.format_output_filename(filename, counter, "png")
         save_path = os.path.join(full_output_folder, file)
         pil_images[0].save(
             save_path,
@@ -220,7 +219,7 @@ class ImageSaveHelper:
         )
         pil_images = [ImageSaveHelper._convert_tensor_to_pil(img) for img in images]
         pil_exif = ImageSaveHelper._create_webp_metadata(pil_images[0], cls)
-        file = f"{filename}_{counter:05}_.webp"
+        file = folder_paths.format_output_filename(filename, counter, "webp")
         pil_images[0].save(
             os.path.join(full_output_folder, file),
             save_all=True,
@@ -284,8 +283,7 @@ class AudioSaveHelper:
 
         results = []
         for batch_number, waveform in enumerate(audio["waveform"].cpu()):
-            filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
-            file = f"{filename_with_batch_num}_{counter:05}_.{format}"
+            file = folder_paths.format_output_filename(filename, counter, format, batch_num=str(batch_number))
             output_path = os.path.join(full_output_folder, file)
 
             # Use original sample rate initially

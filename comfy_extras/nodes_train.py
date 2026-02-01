@@ -1221,9 +1221,9 @@ class SaveLoRA(io.ComfyNode):
             folder_paths.get_save_image_path(prefix, output_dir)
         )
         if steps is None:
-            output_checkpoint = f"{filename}_{counter:05}_.safetensors"
+            output_checkpoint = folder_paths.format_output_filename(filename, counter, "safetensors")
         else:
-            output_checkpoint = f"{filename}_{steps}_steps_{counter:05}_.safetensors"
+            output_checkpoint = folder_paths.format_output_filename(f"{filename}_{steps}_steps", counter, "safetensors")
         output_checkpoint = os.path.join(full_output_folder, output_checkpoint)
         safetensors.torch.save_file(lora, output_checkpoint)
         return io.NodeOutput()

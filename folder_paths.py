@@ -4,12 +4,53 @@ import os
 import time
 import mimetypes
 import logging
+from datetime import datetime, timezone
 from typing import Literal, List
 from collections.abc import Collection
 
 from comfy.cli_args import args
 
 supported_pt_extensions: set[str] = {'.ckpt', '.pt', '.pt2', '.bin', '.pth', '.safetensors', '.pkl', '.sft'}
+
+
+def get_timestamp() -> str:
+    """Generate a filesystem-safe timestamp string for output filenames.
+
+    Returns a UTC timestamp in the format YYYYMMDD-HHMMSS-ffffff (microseconds)
+    which is human-readable, lexicographically sortable, and Windows-safe.
+    """
+    now = datetime.now(timezone.utc)
+    return now.strftime("%Y%m%d-%H%M%S-%f")
+
+
+def format_output_filename(
+    filename: str,
+    counter: int,
+    ext: str,
+    *,
+    batch_num: str | None = None,
+    timestamp: str | None = None,
+) -> str:
+    """Format an output filename with counter and timestamp for cache-busting.
+
+    Args:
+        filename: The base filename prefix
+        counter: The numeric counter for uniqueness
+        ext: The file extension (with or without leading dot)
+        batch_num: Optional batch number to replace %batch_num% placeholder
+        timestamp: Optional timestamp string (defaults to current UTC time)
+
+    Returns:
+        Formatted filename like: filename_00001_20260131-123456-789012_.ext
+    """
+    ext = ext.lstrip(".")
+    if timestamp is None:
+        timestamp = get_timestamp()
+
+    if batch_num is not None:
+        filename = filename.replace("%batch_num%", batch_num)
+
+    return f"{filename}_{counter:05}_{timestamp}_.{ext}"
 
 folder_names_and_paths: dict[str, tuple[list[str], set[str]]] = {}
 
