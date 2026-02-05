@@ -37,7 +37,7 @@ class TencentTextToModelNode(IO.ComfyNode):
             node_id="TencentTextToModelNode",
             display_name="Hunyuan3D: Text to Model (Pro)",
             category="api node/3d/Tencent",
-            essentials_category="3D",
+            main_category="3D",
             inputs=[
                 IO.Combo.Input(
                     "model",
@@ -148,7 +148,7 @@ class TencentImageToModelNode(IO.ComfyNode):
             node_id="TencentImageToModelNode",
             display_name="Hunyuan3D: Image(s) to Model (Pro)",
             category="api node/3d/Tencent",
-            essentials_category="3D",
+            main_category="3D",
             inputs=[
                 IO.Combo.Input(
                     "model",

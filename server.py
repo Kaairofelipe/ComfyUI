@@ -688,8 +688,8 @@ class PromptServer():
 
             info['search_aliases'] = getattr(obj_class, 'SEARCH_ALIASES', [])
 
-            if hasattr(obj_class, 'ESSENTIALS_CATEGORY'):
-                info['essentials_category'] = obj_class.ESSENTIALS_CATEGORY
+            if hasattr(obj_class, 'MAIN_CATEGORY'):
+                info['main_category'] = obj_class.MAIN_CATEGORY
 
             return info
 

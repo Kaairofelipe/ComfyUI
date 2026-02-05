@@ -73,7 +73,7 @@ class SaveVideo(io.ComfyNode):
             search_aliases=["export video"],
             display_name="Save Video",
             category="image/video",
-            essentials_category="Basic",
+            main_category="Basic",
             description="Saves the input images to your ComfyUI output directory.",
             inputs=[
                 io.Video.Input("video", tooltip="The video to save."),
@@ -147,7 +147,7 @@ class GetVideoComponents(io.ComfyNode):
             search_aliases=["extract frames", "split video", "video to images", "demux"],
             display_name="Get Video Components",
             category="image/video",
-            essentials_category="Video Tools",
+            main_category="Video Tools",
             description="Extracts all components from a video: frames, audio, and framerate.",
             inputs=[
                 io.Video.Input("video", tooltip="The video to extract components from."),
@@ -176,7 +176,7 @@ class LoadVideo(io.ComfyNode):
             search_aliases=["import video", "open video", "video file"],
             display_name="Load Video",
             category="image/video",
-            essentials_category="Basic",
+            main_category="Basic",
             inputs=[
                 io.Combo.Input("file", options=sorted(files), upload=io.UploadType.video),
             ],
