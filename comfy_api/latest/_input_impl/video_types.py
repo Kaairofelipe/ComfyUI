@@ -372,7 +372,7 @@ class VideoFromFile(VideoInput):
         trimmed = VideoFromFile(
             self.get_stream_source(),
             start_time=start_time + self.__start_time,
-            duration=duration + self.__duration,
+            duration=duration,
         )
         if trimmed.get_duration() < duration and strict_duration:
             return None
