@@ -426,7 +426,10 @@ class VideoFromComponents(VideoInput):
             audio_stream: Optional[av.AudioStream] = None
             if self.__components.audio:
                 audio_sample_rate = int(self.__components.audio['sample_rate'])
-                audio_stream = output.add_stream('aac', rate=audio_sample_rate)
+                waveform = self.__components.audio['waveform']
+                waveform = waveform[0, :, :math.ceil((audio_sample_rate / frame_rate) * self.__components.images.shape[0])]
+                layout = {1: 'mono', 2: 'stereo', 6: '5.1'}.get(waveform.shape[0], 'stereo')
+                audio_stream = output.add_stream('aac', rate=audio_sample_rate, layout=layout)
 
             # Encode video
             for i, frame in enumerate(self.__components.images):
@@ -441,9 +444,7 @@ class VideoFromComponents(VideoInput):
             output.mux(packet)
 
             if audio_stream and self.__components.audio:
-                waveform = self.__components.audio['waveform']
-                waveform = waveform[:, :, :math.ceil((audio_sample_rate / frame_rate) * self.__components.images.shape[0])]
-                frame = av.AudioFrame.from_ndarray(waveform.movedim(2, 1).reshape(1, -1).float().cpu().numpy(), format='flt', layout='mono' if waveform.shape[1] == 1 else 'stereo')
+                frame = av.AudioFrame.from_ndarray(waveform.float().cpu().numpy(), format='fltp', layout=layout)
                 frame.sample_rate = audio_sample_rate
                 frame.pts = 0
                 output.mux(audio_stream.encode(frame))
