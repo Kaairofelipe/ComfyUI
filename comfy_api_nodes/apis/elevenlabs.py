@@ -1,36 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-class MusicSection(BaseModel):
-    section_name: str = Field(...)
-    positive_local_styles: list[str] = Field(...)
-    negative_local_styles: list[str] = Field(...)
-    duration_ms: int = Field(...)
-    lines: list[str] = Field(...)
-
-
-class MusicPrompt(BaseModel):
-    positive_global_styles: list[str] = Field(...)
-    negative_global_styles: list[str] = Field(...)
-    sections: list[MusicSection] = Field(...)
-
-
-class ComposeMusicRequest(BaseModel):
-    model_id: str = Field(...)
-    prompt: str | None = Field(...)
-    music_length_ms: int | None = Field(...)
-    force_instrumental: bool | None = Field(...)
-    composition_plan: MusicPrompt | None = Field(...)
-    respect_sections_durations: bool | None = Field(...)
-    output_format: str | None = Field(...)
-
-
-class CreateCompositionPlanRequest(BaseModel):
-    prompt: str = Field(...)
-    music_length_ms: int | None = Field(...)
-    model_id: str = Field(...)
-
-
 class SpeechToTextRequest(BaseModel):
     model_id: str = Field(...)
     cloud_storage_url: str = Field(...)
@@ -75,13 +45,6 @@ class TextToSpeechRequest(BaseModel):
     voice_settings: TextToSpeechVoiceSettings | None = Field(None, description="Voice settings")
     seed: int = Field(..., description="Seed for deterministic sampling")
     apply_text_normalization: str | None = Field(None, description="Text normalization mode: auto, on, off")
-
-
-class TextToSoundEffectsRequest(BaseModel):
-    text: str = Field(..., description="Text prompt to convert into a sound effect")
-    duration_seconds: float = Field(..., description="Duration of generated sound in seconds")
-    prompt_influence: float = Field(..., description="How closely generation follows the prompt")
-    loop: bool | None = Field(None, description="Whether to create a smoothly looping sound effect")
 
 
 class AddVoiceRequest(BaseModel):
